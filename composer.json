@@ -1,0 +1,48 @@
+{
+  "name": "intermax/veil",
+  "type": "library",
+  "description": "Improve working with encrypted environment files in Laravel.",
+  "require": {
+    "php": "^8.1",
+    "laravel/framework": "^10.0"
+  },
+  "require-dev": {
+    "pestphp/pest": "^2.28",
+    "laravel/pint": "^1.13",
+    "orchestra/testbench": "^8.17",
+    "larastan/larastan": "^2.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "Intermax\\Veil\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Intermax\\Veil\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Intermax\\Veil\\Providers\\VeilServiceProvider"
+      ]
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "scripts": {
+    "lint": "vendor/bin/pint -v --test --ansi",
+    "fix": "vendor/bin/pint -v --ansi",
+    "analyse": "vendor/bin/phpstan analyse --memory-limit=-1 --ansi",
+    "test": "vendor/bin/pest --colors=always",
+    "ci": [
+      "@fix",
+      "@analyse",
+      "@test"
+    ]
+  }
+}
