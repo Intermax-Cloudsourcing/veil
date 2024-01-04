@@ -1,0 +1,36 @@
+name: Fix code style
+
+on: push
+
+jobs:
+  laravel-pint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
+        with:
+          php-version: '8.2'
+
+      - uses: actions/checkout@v4
+        with:
+          # Fetch the last 2 commits instead of just 1. (Fetching just 1 commit would overwrite the whole history)
+          fetch-depth: 2
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Fix code style
+        run: composer fix
+
+      - name: Get last commit message
+        id: last-commit-message
+        run: |
+          echo "::set-output name=msg::$(git log -1 --pretty=%s)"
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: ${{ steps.last-commit-message.outputs.msg }}
+          commit_options: '--amend --no-edit'
+          push_options: '--force'
+          skip_fetch: true

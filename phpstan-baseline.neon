@@ -1,0 +1,66 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Binary operation \"\\.\" between non\\-falsy\\-string and non\\-empty\\-array\\|non\\-falsy\\-string\\|true results in an error\\.$#"
+			count: 1
+			path: src/Console/EnvironmentDecryptCommand.php
+
+		-
+			message: "#^Method Intermax\\\\Veil\\\\Console\\\\EnvironmentDecryptCommand\\:\\:handle\\(\\) with return type void returns int but should not return anything\\.$#"
+			count: 6
+			path: src/Console/EnvironmentDecryptCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\.\\.\\.\\$values of method Illuminate\\\\Support\\\\Stringable\\:\\:append\\(\\) expects array\\|string, Illuminate\\\\Support\\\\Stringable given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentDecryptCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$cipher of class Illuminate\\\\Encryption\\\\Encrypter constructor expects string, array\\|string\\|true given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentDecryptCommand.php
+
+		-
+			message: "#^Binary operation \"\\.\" between non\\-falsy\\-string and non\\-empty\\-array\\|non\\-falsy\\-string\\|true results in an error\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Method Intermax\\\\Veil\\\\Console\\\\EnvironmentEncryptCommand\\:\\:handle\\(\\) with return type void returns int but should not return anything\\.$#"
+			count: 4
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$cipher of static method Illuminate\\\\Encryption\\\\Encrypter\\:\\:generateKey\\(\\) expects string, array\\|string\\|true given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$key of method Illuminate\\\\Foundation\\\\Console\\\\EnvironmentEncryptCommand\\:\\:parseKey\\(\\) expects string, array\\|bool\\|string given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function base64_encode expects string, array\\|bool\\|string given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\.\\.\\.\\$values of method Illuminate\\\\Support\\\\Stringable\\:\\:append\\(\\) expects array\\|string, Illuminate\\\\Support\\\\Stringable given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$cipher of class Illuminate\\\\Encryption\\\\Encrypter constructor expects string, array\\|string\\|true given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$second of method Illuminate\\\\Console\\\\View\\\\Components\\\\Factory\\:\\:twoColumnDetail\\(\\) expects string\\|null, array\\|bool\\|string given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
+
+		-
+			message: "#^Parameter \\#2 \\$second of method Illuminate\\\\Console\\\\View\\\\Components\\\\Factory\\:\\:twoColumnDetail\\(\\) expects string\\|null, array\\|string\\|true given\\.$#"
+			count: 1
+			path: src/Console/EnvironmentEncryptCommand.php
