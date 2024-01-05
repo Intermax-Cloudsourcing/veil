@@ -14,21 +14,23 @@ beforeEach(function () {
     File::swap($this->filesystem);
 });
 
-it('decrypts an encrypted environment where only values are encrypted', function () {
+it('decrypts an encrypted environment where only secrets are encrypted', function () {
     $contents = <<<'Text'
         APP_NAME=Laravel
         APP_ENV=local
         APP_DEBUG=true
         APP_URL=http://localhost
+        APP_KEY=1234
         Text;
 
     $encrypter = new Encrypter('abcdefghijklmnopabcdefghijklmnop', 'AES-256-CBC');
 
     $encryptedContents = <<<TEXT
-        APP_NAME={$encrypter->encrypt('Laravel')}
-        APP_ENV={$encrypter->encrypt('local')}
-        APP_DEBUG={$encrypter->encrypt('true')}
-        APP_URL={$encrypter->encrypt('http://localhost')}
+        APP_NAME=Laravel
+        APP_ENV=local
+        APP_DEBUG=true
+        APP_URL=http://localhost
+        APP_KEY={$encrypter->encrypt('1234')}
         TEXT;
 
     $this->filesystem->shouldReceive('exists')
