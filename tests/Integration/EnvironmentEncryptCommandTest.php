@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Mockery as m;
 
 beforeEach(function () {
@@ -16,8 +17,9 @@ beforeEach(function () {
     File::swap($this->filesystem);
 });
 
-it('encrypts the values of an environment', function () {
+it('encrypts the secrets of an environment', function () {
     $contents = <<<'Text'
+        APP_KEY=1234
         APP_NAME=Laravel
         APP_ENV=local
         APP_DEBUG=true
@@ -40,8 +42,11 @@ it('encrypts the values of an environment', function () {
             $this->assertStringContainsString('APP_ENV', $contents);
             $this->assertStringContainsString('APP_DEBUG', $contents);
             $this->assertStringContainsString('APP_URL', $contents);
+            $this->assertStringContainsString('APP_KEY', $contents);
 
-            $this->assertEquals('Laravel', $encrypter->decrypt(Str::betweenFirst($contents, '=', "\n")));
+            $this->assertEquals('1234', $encrypter->decrypt(Str::betweenFirst($contents, '=', "\n")));
+
+            $this->assertEquals('http://localhost', Str::afterLast($contents, '='));
 
             return true;
         })->andReturn(true);

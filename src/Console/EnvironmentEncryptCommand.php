@@ -17,7 +17,9 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                     {--cipher= : The encryption cipher}
                     {--env= : The environment to be encrypted}
                     {--force : Overwrite the existing encrypted environment file}
-                    {--only-values : Encrypt only the values to keep the file readable}';
+                    {--only-values : Encrypt only the values to keep the file readable}
+                    {--only=**_KEY,*_SECRET,*_PASSWORD : Encrypt only variables that match provided comma-separated patterns, by default values with *_KEY, *_SECRET and *_PASSWORD will be encrypted}
+                    {--all : Ignore the --only flag and default patterns to encrypt all variables}';
 
     public function handle()
     {
@@ -76,10 +78,17 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
 
     protected function encryptValues(string $contents, Encrypter $encrypter): string
     {
-        return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter) {
+        /** @var array<int, string> $only */
+        $only = $this->option('only');
+
+        return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter, $only) {
             $line = Str::of($line);
 
             if (! $line->contains('=')) {
+                return $line;
+            }
+
+            if (! $this->option('all') && $only !== null && ! $line->before('=')->is($only)) {
                 return $line;
             }
 

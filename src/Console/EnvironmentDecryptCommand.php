@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Intermax\Veil\Console;
 
 use Exception;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Console\EnvironmentDecryptCommand as BaseDecryptCommand;
 use Illuminate\Support\Env;
@@ -96,8 +97,17 @@ class EnvironmentDecryptCommand extends BaseDecryptCommand
             return $line->before('=')
                 ->append('=')
                 ->append(
-                    $line->after('=')
-                        ->pipe(fn (Stringable $value) => $encrypter->decrypt($value->toString()))
+                    $line->after('=')->pipe(function (Stringable $value) use ($encrypter) {
+                        try {
+                            return $encrypter->decrypt($value->toString());
+                        } catch (DecryptException $e) {
+                            if ($e->getMessage() == 'The payload is invalid.') {
+                                return $value->toString();
+                            }
+
+                            throw $e;
+                        }
+                    })
                 );
         })->toArray());
     }
