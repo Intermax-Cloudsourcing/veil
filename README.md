@@ -1,6 +1,6 @@
 # Veil for Laravel
 
-Veil is a package to help manage encrypted environments in your Laravel application. It adds an `--only-values` flag to the Laravel encrypted environment commands. Without this package, this environment file:
+Veil is a package to help manage encrypted environments in your Laravel or Laravel Zero application. It adds an `--only-values` flag to the Laravel encrypted environment commands. Without this package, this environment file:
 
 ```text
 APP_NAME="My awesome app"

@@ -3,10 +3,10 @@
   "type": "library",
   "description": "Improve working with encrypted environment files in Laravel.",
   "require": {
-    "php": "^8.1",
-    "laravel/framework": "^10.0|^11.0"
+    "php": "^8.1"
   },
   "require-dev": {
+    "laravel/framework": "^10.0|^11.0",
     "pestphp/pest": "^2.28",
     "laravel/pint": "^1.13",
     "orchestra/testbench": "^8.17",
@@ -21,6 +21,10 @@
     "psr-4": {
       "Intermax\\Veil\\Tests\\": "tests/"
     }
+  },
+  "suggest": {
+    "laravel/framework": "This package is meant to be used with Laravel or Laravel Zero as it extends the commands to encrypt/decrypt environments",
+    "laravel-zero/framework": "This package is meant to be used with Laravel or Laravel Zero as it extends the commands to encrypt/decrypt environments"
   },
   "extra": {
     "laravel": {
