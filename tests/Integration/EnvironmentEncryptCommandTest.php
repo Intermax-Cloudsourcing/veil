@@ -24,6 +24,7 @@ it('encrypts the secrets of an environment', function () {
         APP_ENV=local
         APP_DEBUG=true
         APP_URL=http://localhost
+        API_TOKEN=secret
         Text;
 
     $this->filesystem->shouldReceive('exists')
@@ -43,10 +44,10 @@ it('encrypts the secrets of an environment', function () {
             $this->assertStringContainsString('APP_DEBUG', $contents);
             $this->assertStringContainsString('APP_URL', $contents);
             $this->assertStringContainsString('APP_KEY', $contents);
+            $this->assertStringContainsString('http://localhost', $contents);
 
             $this->assertEquals('1234', $encrypter->decrypt(Str::betweenFirst($contents, '=', "\n")));
-
-            $this->assertEquals('http://localhost', Str::afterLast($contents, '='));
+            $this->assertEquals('secret', $encrypter->decrypt(Str::afterLast($contents, '=')));
 
             return true;
         })->andReturn(true);
