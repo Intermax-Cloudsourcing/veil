@@ -11,9 +11,12 @@ use Illuminate\Foundation\Console\EnvironmentDecryptCommand as BaseDecryptComman
 use Illuminate\Support\Env;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Intermax\Veil\Concerns\LineEndingDetection;
 
 class EnvironmentDecryptCommand extends BaseDecryptCommand
 {
+    use LineEndingDetection;
+
     protected $signature = 'env:decrypt
                     {--key= : The encryption key}
                     {--cipher= : The encryption cipher}
@@ -87,7 +90,9 @@ class EnvironmentDecryptCommand extends BaseDecryptCommand
 
     protected function decryptValues(string $contents, Encrypter $encrypter): string
     {
-        return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter) {
+        $lineEnding = $this->detectLineEnding($contents);
+
+        return implode($lineEnding, collect(explode($lineEnding, $contents))->map(function (string $line) use ($encrypter) {
             $line = Str::of($line);
 
             if (! $line->contains('=')) {
