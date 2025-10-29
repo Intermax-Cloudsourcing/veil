@@ -81,6 +81,14 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
         /** @var array<int, string> $only */
         $only = $this->option('only');
 
+        /**
+         * The --only="*_TOKEN,*_KEY" argument will fill the $only variable with [0 => '*_TOKEN,*_KEY']
+         * This will explode the string out to use an an actual array as the ->is() method expects.
+         */
+        if(is_array($only) && count($only) === 1 && str($only[0])->contains(',')) {
+            $only = explode(',', $only[0]);
+        }
+
         return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter, $only) {
             $line = Str::of($line);
 
