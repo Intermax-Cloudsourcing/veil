@@ -28,11 +28,7 @@ it('encrypts the secrets of an environment', function () {
         Text;
 
     $this->filesystem->shouldReceive('exists')
-        ->once()
-        ->andReturn(true)
-        ->shouldReceive('exists')
-        ->once()
-        ->andReturn(false)
+        ->andReturn(true, false, false)
         ->shouldReceive('get')
         ->andReturn($contents)
         ->shouldReceive('put')
@@ -46,8 +42,8 @@ it('encrypts the secrets of an environment', function () {
             $this->assertStringContainsString('APP_KEY', $contents);
             $this->assertStringContainsString('http://localhost', $contents);
 
-            $this->assertEquals('1234', $encrypter->decrypt(Str::betweenFirst($contents, '=', "\n")));
-            $this->assertEquals('secret', $encrypter->decrypt(Str::afterLast($contents, '=')));
+            $this->assertEquals('1234', $encrypter->decrypt(Str::betweenFirst($contents, 'APP_KEY=', PHP_EOL)));
+            $this->assertEquals('secret', $encrypter->decrypt(Str::betweenFirst($contents, 'API_TOKEN=', PHP_EOL)));
 
             return true;
         })->andReturn(true);
