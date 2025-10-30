@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Intermax\Veil\Console;
 
 use Exception;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Console\EnvironmentEncryptCommand as BaseEncryptCommand;
 use Illuminate\Support\Str;
@@ -51,7 +52,7 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
             $contents = $this->files->get($environmentFile);
 
             if ($this->option('only-values')) {
-                $encryptedContents = $this->encryptValues($contents, $encrypter);
+                $encryptedContents = $this->encryptValues($contents, $encrypter, $this->files->get($encryptedFile));
             } else {
                 $encryptedContents = $encrypter->encrypt($contents);
             }
@@ -76,12 +77,13 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
         return self::SUCCESS;
     }
 
-    protected function encryptValues(string $contents, Encrypter $encrypter): string
+    protected function encryptValues(string $contents, Encrypter $encrypter, ?string $existingEncryptedContents): string
     {
         /** @var array<int, string> $only */
         $only = $this->option('only');
+        $existingEncryptedLines = Str::of($existingEncryptedContents ?? '')->explode(PHP_EOL);
 
-        return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter, $only) {
+        return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter, $only, $existingEncryptedLines) {
             $line = Str::of($line);
 
             if (! $line->contains('=')) {
@@ -92,6 +94,36 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                 return $line;
             }
 
+            $key = $line->before('=');
+            $value = $line->after('=');
+
+            $existingEncryptedLine = $existingEncryptedLines->first(fn (string $encryptedLine) => Str::of($encryptedLine)->before('=')->exactly($key));
+            $existingEncryptedValue = $existingEncryptedLine ? Str::of($existingEncryptedLine)->after('=') : null;
+            $existingValue = null;
+
+            try {
+                $existingValue = $existingEncryptedValue ? $encrypter->decrypt($existingEncryptedValue->toString()) : null;
+            } catch (DecryptException $exception) {
+                // The existing value could not be decrypted, most likely because it was a non-encrypted value before (null, true, false, blank, or just plain text)
+            }
+
+            /**
+             * Prevent rotating already encrypted values to improve source control diffs
+             */
+            if ($value->exactly($existingValue)) {
+                return $existingEncryptedLine;
+            }
+
+            /**
+             * Skip blank, null, true, false values
+             */
+            if (blank($value) || $value->exactly('null') || $value->exactly('true') || $value->exactly('false')) {
+                return $line;
+            }
+
+            /**
+             * Encrypt and return updated line
+             */
             return $line->before('=')
                 ->append('=')
                 ->append(
