@@ -52,7 +52,7 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
             $contents = $this->files->get($environmentFile);
 
             if ($this->option('only-values')) {
-                $encryptedContents = $this->encryptValues($contents, $encrypter, $this->files->get($encryptedFile));
+                $encryptedContents = $this->encryptValues($contents, $encrypter, $this->files->exists($encryptedFile) ? $this->files->get($encryptedFile) : null);
             } else {
                 $encryptedContents = $encrypter->encrypt($contents);
             }
