@@ -18,7 +18,7 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                     {--env= : The environment to be encrypted}
                     {--force : Overwrite the existing encrypted environment file}
                     {--only-values : Encrypt only the values to keep the file readable}
-                    {--only=**_KEY,*_SECRET,*_PASSWORD,*_TOKEN : Encrypt only variables that match provided comma-separated patterns, by default values with *_KEY, *_SECRET, *_TOKEN and *_PASSWORD will be encrypted}
+                    {--only=**_KEY,*_KEYS,*_SECRET,*_PASSWORD,*_TOKEN : Encrypt only variables that match provided comma-separated patterns, by default values with *_KEY, *_SECRET, *_TOKEN and *_PASSWORD will be encrypted}
                     {--all : Ignore the --only flag and default patterns to encrypt all variables}';
 
     public function handle()
