@@ -112,3 +112,42 @@ it('prevents rotating unchanged already encrypted secrets', function () {
         ->expectsOutputToContain('Environment successfully encrypted.')
         ->assertExitCode(0);
 });
+
+
+it('does not encrypt known safe values such as null', function () {
+    $contents = <<<'Text'
+        APP_KEY=null
+        OTHER_SECRET=true
+        API_PASSWORD=false
+        APP_ONE_KEY=1
+        APP_ZERO_KEY=0
+        API_TOKEN=
+        APP_NAME=Laravel
+        Text;
+
+    // Allow an extra exists() call when checking for an existing encrypted file
+    $this->filesystem->shouldReceive('exists')
+        ->andReturn(true, false, false)
+        ->shouldReceive('get')
+        ->andReturn($contents)
+        ->shouldReceive('put')
+        ->withArgs(function ($file, $contents) {
+            // Ensure safe values are left as-is (not encrypted)
+            $this->assertStringContainsString('APP_KEY=null' . PHP_EOL, $contents);
+            $this->assertStringContainsString('OTHER_SECRET=true' . PHP_EOL, $contents);
+            $this->assertStringContainsString('API_PASSWORD=false' . PHP_EOL, $contents);
+            $this->assertStringContainsString('APP_ONE_KEY=1' . PHP_EOL, $contents);
+            $this->assertStringContainsString('APP_ZERO_KEY=0' . PHP_EOL, $contents);
+            $this->assertStringContainsString('API_TOKEN=' . PHP_EOL, $contents);
+
+            // Sanity check that non-matching keys are preserved too
+            $this->assertStringContainsString('APP_NAME=Laravel', $contents);
+
+            return true;
+        })
+        ->andReturnTrue();
+
+    $this->artisan('env:encrypt', ['--env' => 'production', '--key' => 'abcdefghijklmnopabcdefghijklmnop', '--only-values' => true])
+        ->expectsOutputToContain('Environment successfully encrypted.')
+        ->assertExitCode(0);
+});
