@@ -46,10 +46,10 @@ php artisan env:decrypt --only-values ...
 ```
 
 ### Only Encrypting Secrets
-By default, if the `--only-values` flag is used only variables ending with `_PASSWORD`, `_KEY` and `_SECRET` will be encrypted. You can configure this behaviour with the `--only` flag. If you would only want to encrypt the variables ending with `_SECRET` and the `APP_KEY`, use it like this:
+By default, if the `--only-values` flag is used only variables ending with `_PASSWORD`, `_KEY` and `_SECRET` will be encrypted. You can configure this behaviour with the `--only` flag. If you would only want to encrypt the variables ending with `_SECRET` and the `APP_KEY`, you can specify multiple `--only` flags like this:
 
 ```shell
-php artisan env:encrypt --only-values --only="*_SECRET,APP_KEY"
+php artisan env:encrypt --only-values --only=*_SECRET --only=APP_KEY
 ```
 
 For decrypting, there is no difference: the decrypt command will leave unencrypted values.
