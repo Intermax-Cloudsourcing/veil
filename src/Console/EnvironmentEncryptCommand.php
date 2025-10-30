@@ -117,7 +117,16 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
             /**
              * Skip blank, null, true, false values
              */
-            if (blank($value) || $value->exactly('null') || $value->exactly('true') || $value->exactly('false')) {
+            $safeValues = [
+                '',
+                'null',
+                'true',
+                'false',
+                '1',
+                '0'
+            ];
+
+            if (in_array($value->toString(), $safeValues, true)) {
                 return $line;
             }
 
