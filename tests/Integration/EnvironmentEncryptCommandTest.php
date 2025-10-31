@@ -59,15 +59,15 @@ it('prevents rotating unchanged already encrypted secrets', function () {
         APP_KEY=1234
         APP_NAME=Laravel
         API_TOKEN=secret
-        NEW_SECRET=newvalue
-        CHANGED_SECRET=secret-2
+        NEW_SECRET=new-secret-value
+        CHANGED_SECRET=changed-secret-new
         Text;
 
     $encrypter = new Encrypter('abcdefghijklmnopabcdefghijklmnop', 'AES-256-CBC');
 
     $encryptedAppKey = $encrypter->encrypt('1234');
     $encryptedApiToken = $encrypter->encrypt('secret');
-    $encryptedChangedSecret = $encrypter->encrypt('secret-1');
+    $encryptedChangedSecret = $encrypter->encrypt('changed-secret-old');
 
     $existingEncryptedContents = implode(PHP_EOL, [
         "APP_KEY={$encryptedAppKey}",
@@ -80,16 +80,16 @@ it('prevents rotating unchanged already encrypted secrets', function () {
         ->shouldReceive('get')
         ->andReturn($plainContents, $existingEncryptedContents)
         ->shouldReceive('put')
-        ->withArgs(function ($file, $contents) use ($encryptedAppKey, $encryptedApiToken) {
+        ->withArgs(function ($file, $contents) use ($encryptedAppKey, $encryptedApiToken, $encrypter) {
             // The command should reuse existing encrypted values, not rotate them
             $this->assertEquals($encryptedAppKey, Str::betweenFirst($contents, 'APP_KEY=', PHP_EOL));
             $this->assertEquals($encryptedApiToken, Str::betweenFirst($contents, 'API_TOKEN=', PHP_EOL));
 
             // The command should encrypt changed secrets
-            $this->assertNotEquals($encryptedAppKey, Str::betweenFirst($contents, 'CHANGED_SECRET=', PHP_EOL));
+            $this->assertEquals('changed-secret-new', $encrypter->decrypt(Str::betweenFirst($contents, 'CHANGED_SECRET=', PHP_EOL)));
 
             // The command should encrypt new secrets
-            $this->assertNotEquals($encryptedAppKey, Str::betweenFirst($contents, 'NEW_SECRET=', PHP_EOL));
+            $this->assertEquals('new-secret-value', $encrypter->decrypt(Str::betweenFirst($contents, 'NEW_SECRET=', PHP_EOL)));
 
             // Still keeps non-matching keys readable
             $this->assertStringContainsString('APP_NAME=Laravel' . PHP_EOL, $contents);
