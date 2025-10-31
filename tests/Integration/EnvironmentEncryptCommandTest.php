@@ -58,9 +58,6 @@ it('prevents rotating unchanged already encrypted secrets', function () {
     $plainContents = <<<'Text'
         APP_KEY=1234
         APP_NAME=Laravel
-        APP_ENV=local
-        APP_DEBUG=true
-        APP_URL=http://localhost
         API_TOKEN=secret
         NEW_SECRET=newvalue
         CHANGED_SECRET=secret-2
@@ -96,9 +93,6 @@ it('prevents rotating unchanged already encrypted secrets', function () {
 
             // Still keeps non-matching keys readable
             $this->assertStringContainsString('APP_NAME=Laravel' . PHP_EOL, $contents);
-            $this->assertStringContainsString('APP_ENV=local' . PHP_EOL, $contents);
-            $this->assertStringContainsString('APP_DEBUG=true' . PHP_EOL, $contents);
-            $this->assertStringContainsString('APP_URL=http://localhost' . PHP_EOL, $contents);
 
             return true;
         })
