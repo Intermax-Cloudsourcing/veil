@@ -122,8 +122,6 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                 'null',
                 'true',
                 'false',
-                '1',
-                '0'
             ];
 
             if (in_array($value->toString(), $safeValues, true)) {
