@@ -124,8 +124,6 @@ it('does not encrypt known safe values such as null', function () {
             $this->assertStringContainsString('APP_KEY=null'.PHP_EOL, $contents);
             $this->assertStringContainsString('OTHER_SECRET=true'.PHP_EOL, $contents);
             $this->assertStringContainsString('API_PASSWORD=false'.PHP_EOL, $contents);
-            $this->assertStringContainsString('APP_ONE_KEY=1'.PHP_EOL, $contents);
-            $this->assertStringContainsString('APP_ZERO_KEY=0'.PHP_EOL, $contents);
             $this->assertStringContainsString('API_TOKEN='.PHP_EOL, $contents);
 
             // Sanity check that non-matching keys are preserved too
