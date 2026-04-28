@@ -23,20 +23,21 @@ class EnvironmentDecryptCommand extends BaseDecryptCommand
                     {--filename= : Filename of the decrypted file}
                     {--only-values : Enable if the encrypted file was encrypted with the same flag}';
 
-    public function handle()
+    public function handle(): int
     {
-        $key = $this->option('key') ?: Env::get('LARAVEL_ENV_ENCRYPTION_KEY');
+        $key = $this->stringOption('key') ?: Env::get('LARAVEL_ENV_ENCRYPTION_KEY');
 
-        if (! $key) {
+        if (! is_string($key) || $key === '') {
             $this->components->error('A decryption key is required.');
 
             return self::FAILURE;
         }
 
-        $cipher = $this->option('cipher') ?: 'AES-256-CBC';
+        $cipher = $this->stringOption('cipher') ?: 'AES-256-CBC';
         $key = $this->parseKey($key);
-        $encryptedFile = ($this->option('env')
-                ? base_path('.env').'.'.$this->option('env')
+        $env = $this->stringOption('env');
+        $encryptedFile = ($env !== null && $env !== ''
+                ? base_path('.env').'.'.$env
                 : $this->laravel->environmentFilePath()).'.encrypted';
 
         $outputFile = $this->outputFilePath();
@@ -107,8 +108,15 @@ class EnvironmentDecryptCommand extends BaseDecryptCommand
 
                             throw $e;
                         }
-                    })
+                    })->toString()
                 );
         })->toArray());
+    }
+
+    private function stringOption(string $name): ?string
+    {
+        $value = $this->option($name);
+
+        return is_string($value) ? $value : null;
     }
 }
