@@ -22,13 +22,14 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                     {--only=**_KEY,*_KEYS,*_SECRET,*_PASSWORD,*_TOKEN : Encrypt only variables that match provided comma-separated patterns, by default values with *_KEY, *_SECRET, *_TOKEN and *_PASSWORD will be encrypted}
                     {--all : Ignore the --only flag and default patterns to encrypt all variables}';
 
-    public function handle()
+    public function handle(): int
     {
-        $cipher = $this->option('cipher') ?: 'AES-256-CBC';
-        $key = $this->option('key');
+        $cipher = $this->stringOption('cipher') ?: 'AES-256-CBC';
+        $key = $this->stringOption('key');
         $keyPassed = $key !== null;
-        $environmentFile = $this->option('env')
-            ? base_path('.env').'.'.$this->option('env')
+        $env = $this->stringOption('env');
+        $environmentFile = $env !== null && $env !== ''
+            ? base_path('.env').'.'.$env
             : $this->laravel->environmentFilePath();
         $encryptedFile = $environmentFile.'.encrypted';
         if (! $keyPassed) {
@@ -90,7 +91,7 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                 return $line;
             }
 
-            if (! $this->option('all') && $only !== null && ! $line->before('=')->is($only)) {
+            if (! $this->option('all') && ! $line->before('=')->is($only)) {
                 return $line;
             }
 
@@ -136,7 +137,15 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                 ->append(
                     $line->after('=')
                         ->pipe(fn (Stringable $value) => $encrypter->encrypt($value->toString()))
+                        ->toString()
                 );
         })->toArray());
+    }
+
+    private function stringOption(string $name): ?string
+    {
+        $value = $this->option($name);
+
+        return is_string($value) ? $value : null;
     }
 }

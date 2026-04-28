@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use Intermax\Veil\Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,7 +14,7 @@ declare(strict_types=1);
 |
 */
 
-uses(\Intermax\Veil\Tests\TestCase::class)->in('Feature', 'Integration');
+uses(TestCase::class)->in('Feature', 'Integration');
 
 /*
 |--------------------------------------------------------------------------
