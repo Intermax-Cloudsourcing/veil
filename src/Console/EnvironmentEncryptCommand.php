@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Intermax\Veil\Console;
 
 use Exception;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Console\EnvironmentEncryptCommand as BaseEncryptCommand;
 use Illuminate\Support\Str;
@@ -21,16 +22,17 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
                     {--env= : The environment to be encrypted}
                     {--force : Overwrite the existing encrypted environment file}
                     {--only-values : Encrypt only the values to keep the file readable}
-                    {--only=**_KEY,*_SECRET,*_PASSWORD,*_TOKEN : Encrypt only variables that match provided comma-separated patterns, by default values with *_KEY, *_SECRET, *_TOKEN and *_PASSWORD will be encrypted}
+                    {--only=**_KEY,*_KEYS,*_SECRET,*_PASSWORD,*_TOKEN : Encrypt only variables that match provided comma-separated patterns, by default values with *_KEY, *_SECRET, *_TOKEN and *_PASSWORD will be encrypted}
                     {--all : Ignore the --only flag and default patterns to encrypt all variables}';
 
-    public function handle()
+    public function handle(): int
     {
-        $cipher = $this->option('cipher') ?: 'AES-256-CBC';
-        $key = $this->option('key');
+        $cipher = $this->stringOption('cipher') ?: 'AES-256-CBC';
+        $key = $this->stringOption('key');
         $keyPassed = $key !== null;
-        $environmentFile = $this->option('env')
-            ? base_path('.env').'.'.$this->option('env')
+        $env = $this->stringOption('env');
+        $environmentFile = $env !== null && $env !== ''
+            ? base_path('.env').'.'.$env
             : $this->laravel->environmentFilePath();
         $encryptedFile = $environmentFile.'.encrypted';
         if (! $keyPassed) {
@@ -54,7 +56,7 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
             $contents = $this->files->get($environmentFile);
 
             if ($this->option('only-values')) {
-                $encryptedContents = $this->encryptValues($contents, $encrypter);
+                $encryptedContents = $this->encryptValues($contents, $encrypter, $this->files->exists($encryptedFile) ? $this->files->get($encryptedFile) : null);
             } else {
                 $encryptedContents = $encrypter->encrypt($contents);
             }
@@ -79,30 +81,76 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
         return self::SUCCESS;
     }
 
-    protected function encryptValues(string $contents, Encrypter $encrypter): string
+    protected function encryptValues(string $contents, Encrypter $encrypter, ?string $existingEncryptedContents): string
     {
         /** @var array<int, string> $only */
         $only = $this->option('only');
+        $existingEncryptedLines = Str::of($existingEncryptedContents ?? '')->explode($this->detectLineEnding($existingEncryptedContents ?? ''));
 
         $lineEnding = $this->detectLineEnding($contents);
 
-        return implode($lineEnding, collect(explode($lineEnding, $contents))->map(function (string $line) use ($encrypter, $only) {
+        return implode($lineEnding, collect(explode($lineEnding, $contents))->map(function (string $line) use ($encrypter, $only, $existingEncryptedLines) {
             $line = Str::of($line);
 
             if (! $line->contains('=')) {
                 return $line;
             }
 
-            if (! $this->option('all') && $only !== null && ! $line->before('=')->is($only)) {
+            if (! $this->option('all') && ! $line->before('=')->is($only)) {
                 return $line;
             }
 
+            $key = $line->before('=');
+            $value = $line->after('=');
+
+            $existingEncryptedLine = $existingEncryptedLines->first(fn (string $encryptedLine) => Str::of($encryptedLine)->before('=')->exactly($key));
+            $existingEncryptedValue = $existingEncryptedLine ? Str::of($existingEncryptedLine)->after('=') : null;
+            $existingValue = null;
+
+            try {
+                $existingValue = $existingEncryptedValue ? $encrypter->decrypt($existingEncryptedValue->toString()) : null;
+            } catch (DecryptException $exception) {
+                // The existing value could not be decrypted, most likely because it was a non-encrypted value before (null, true, false, blank, or just plain text)
+            }
+
+            /**
+             * Prevent rotating already encrypted values to improve source control diffs
+             */
+            if ($value->exactly($existingValue)) {
+                return $existingEncryptedLine;
+            }
+
+            /**
+             * Skip blank, null, true, false values
+             */
+            $safeValues = [
+                '',
+                'null',
+                'true',
+                'false',
+            ];
+
+            if (in_array($value->toString(), $safeValues, true)) {
+                return $line;
+            }
+
+            /**
+             * Encrypt and return updated line
+             */
             return $line->before('=')
                 ->append('=')
                 ->append(
                     $line->after('=')
                         ->pipe(fn (Stringable $value) => $encrypter->encrypt($value->toString()))
+                        ->toString()
                 );
         })->toArray());
+    }
+
+    private function stringOption(string $name): ?string
+    {
+        $value = $this->option($name);
+
+        return is_string($value) ? $value : null;
     }
 }

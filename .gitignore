@@ -1,3 +1,5 @@
 .idea
 vendor
 composer.lock
+.claude
+.DS_Store
