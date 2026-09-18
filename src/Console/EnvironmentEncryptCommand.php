@@ -10,9 +10,12 @@ use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Console\EnvironmentEncryptCommand as BaseEncryptCommand;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Intermax\Veil\Concerns\LineEndingDetection;
 
 class EnvironmentEncryptCommand extends BaseEncryptCommand
 {
+    use LineEndingDetection;
+
     protected $signature = 'env:encrypt
                     {--key= : The encryption key}
                     {--cipher= : The encryption cipher}
@@ -82,9 +85,11 @@ class EnvironmentEncryptCommand extends BaseEncryptCommand
     {
         /** @var array<int, string> $only */
         $only = $this->option('only');
-        $existingEncryptedLines = Str::of($existingEncryptedContents ?? '')->explode(PHP_EOL);
+        $existingEncryptedLines = Str::of($existingEncryptedContents ?? '')->explode($this->detectLineEnding($existingEncryptedContents ?? ''));
 
-        return implode(PHP_EOL, collect(explode(PHP_EOL, $contents))->map(function (string $line) use ($encrypter, $only, $existingEncryptedLines) {
+        $lineEnding = $this->detectLineEnding($contents);
+
+        return implode($lineEnding, collect(explode($lineEnding, $contents))->map(function (string $line) use ($encrypter, $only, $existingEncryptedLines) {
             $line = Str::of($line);
 
             if (! $line->contains('=')) {

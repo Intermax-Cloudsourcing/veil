@@ -137,3 +137,78 @@ it('does not encrypt known safe values such as null', function () {
         ->expectsOutputToContain('Environment successfully encrypted.')
         ->assertExitCode(0);
 });
+
+it('encrypts the secrets of an environment using the line endings of the file', function () {
+    $contents = implode("\r\n", [
+        'APP_KEY=1234',
+        'APP_NAME=Laravel',
+        'APP_ENV=local',
+        'API_TOKEN=secret',
+    ]);
+
+    $this->filesystem->shouldReceive('exists')
+        ->andReturn(true, false, false)
+        ->shouldReceive('get')
+        ->andReturn($contents)
+        ->shouldReceive('put')
+        ->withArgs(function ($file, $contents) {
+            $encrypter = new Encrypter('abcdefghijklmnopabcdefghijklmnop', 'AES-256-CBC');
+
+            $lines = explode("\r\n", $contents);
+
+            $this->assertCount(4, $lines);
+            $this->assertStringNotContainsString("\r", implode('', $lines));
+
+            $this->assertSame('APP_NAME=Laravel', $lines[1]);
+            $this->assertSame('APP_ENV=local', $lines[2]);
+
+            $this->assertSame('1234', $encrypter->decrypt(Str::after($lines[0], 'APP_KEY=')));
+            $this->assertSame('secret', $encrypter->decrypt(Str::after($lines[3], 'API_TOKEN=')));
+
+            return true;
+        })->andReturn(true);
+
+    $this->artisan('env:encrypt', ['--env' => 'production', '--key' => 'abcdefghijklmnopabcdefghijklmnop', '--only-values' => true])
+        ->expectsOutputToContain('Environment successfully encrypted.')
+        ->assertExitCode(0);
+});
+
+it('prevents rotating unchanged secrets in an encrypted file with windows line endings', function () {
+    $encrypter = new Encrypter('abcdefghijklmnopabcdefghijklmnop', 'AES-256-CBC');
+
+    $encryptedAppKey = $encrypter->encrypt('1234');
+
+    $plainContents = implode("\r\n", [
+        'APP_KEY=1234',
+        'APP_NAME=Laravel',
+        'API_TOKEN=secret',
+    ]);
+
+    $existingEncryptedContents = implode("\r\n", [
+        "APP_KEY={$encryptedAppKey}",
+        'APP_NAME=Laravel',
+    ]);
+
+    $this->filesystem->shouldReceive('exists')
+        ->andReturn(true, true, true)
+        ->shouldReceive('get')
+        ->andReturn($plainContents, $existingEncryptedContents)
+        ->shouldReceive('put')
+        ->withArgs(function ($file, $contents) use ($encryptedAppKey, $encrypter) {
+            $lines = explode("\r\n", $contents);
+
+            $this->assertCount(3, $lines);
+            $this->assertStringNotContainsString("\r", implode('', $lines));
+
+            $this->assertSame("APP_KEY={$encryptedAppKey}", $lines[0]);
+            $this->assertSame('APP_NAME=Laravel', $lines[1]);
+            $this->assertSame('secret', $encrypter->decrypt(Str::after($lines[2], 'API_TOKEN=')));
+
+            return true;
+        })
+        ->andReturnTrue();
+
+    $this->artisan('env:encrypt', ['--env' => 'production', '--key' => 'abcdefghijklmnopabcdefghijklmnop', '--only-values' => true, '--force' => true])
+        ->expectsOutputToContain('Environment successfully encrypted.')
+        ->assertExitCode(0);
+});

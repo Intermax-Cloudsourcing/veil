@@ -50,3 +50,36 @@ it('decrypts an encrypted environment where only secrets are encrypted', functio
     $this->filesystem->shouldHaveReceived('put')
         ->with('/tmp'.DIRECTORY_SEPARATOR.'.env', $contents);
 });
+
+it('decrypts an encrypted environment using the line endings of the file', function () {
+    $encrypter = new Encrypter('abcdefghijklmnopabcdefghijklmnop', 'AES-256-CBC');
+
+    $contents = implode("\r\n", [
+        'APP_KEY=1234',
+        'APP_NAME=Laravel',
+        'APP_ENV=local',
+    ]);
+
+    $encryptedContents = implode("\r\n", [
+        'APP_KEY='.$encrypter->encrypt('1234'),
+        'APP_NAME=Laravel',
+        'APP_ENV=local',
+    ]);
+
+    $this->filesystem->shouldReceive('exists')
+        ->once()
+        ->andReturn(true)
+        ->shouldReceive('exists')
+        ->once()
+        ->andReturn(false)
+        ->shouldReceive('get')
+        ->once()
+        ->andReturn($encryptedContents);
+
+    $this->artisan('env:decrypt', ['--env' => 'production', '--key' => 'abcdefghijklmnopabcdefghijklmnop', '--filename' => '.env', '--path' => '/tmp', '--only-values' => true])
+        ->expectsOutputToContain('Environment successfully decrypted.')
+        ->assertExitCode(0);
+
+    $this->filesystem->shouldHaveReceived('put')
+        ->with('/tmp'.DIRECTORY_SEPARATOR.'.env', $contents);
+});
